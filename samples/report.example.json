@@ -1,0 +1,47 @@
+{
+  "scan_timestamp": "2026-05-25T03:29:46Z",
+  "account_id": "000000000000",
+  "region": "us-east-1",
+  "summary": {
+    "total_orphans": 3,
+    "estimated_monthly_waste_usd": 1.6
+  },
+  "findings": [
+    {
+      "resource_id": "vol-c3839194",
+      "resource_type": "ebs_volume",
+      "reason": "unattached",
+      "age_days": 0,
+      "estimated_monthly_cost_usd": 1.6,
+      "tags": {
+        "Environment": "staging",
+        "ManagedBy": "terraform",
+        "Project": "NimbusKart",
+        "Name": "NimbusKart-staging-orphan-vol",
+        "Owner": "platform-team"
+      },
+      "suggested_action": "delete",
+      "safe_to_auto_delete": false
+    },
+    {
+      "resource_id": "vol-87a5743a",
+      "resource_type": "ebs_volume",
+      "reason": "missing tags: Project, Environment, Owner",
+      "age_days": 0,
+      "estimated_monthly_cost_usd": 0.0,
+      "tags": {},
+      "suggested_action": "add missing tags",
+      "safe_to_auto_delete": false
+    },
+    {
+      "resource_id": "vol-098c372c",
+      "resource_type": "ebs_volume",
+      "reason": "missing tags: Project, Environment, Owner",
+      "age_days": 0,
+      "estimated_monthly_cost_usd": 0.0,
+      "tags": {},
+      "suggested_action": "add missing tags",
+      "safe_to_auto_delete": false
+    }
+  ]
+}
