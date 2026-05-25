@@ -25,11 +25,11 @@ jobs:
           SERVICES: ec2,s3,sts
           DEFAULT_REGION: us-east-1
         options: >-
-          --health-cmd "curl -f http://localhost:4566/_localstack/health || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-          --health-start-period 30s
+          --health-cmd "curl -s http://localhost:4566/_localstack/health | grep -q '\"ec2\"' || exit 1"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 20
+          --health-start-period 60s
 
     steps:
       - name: Checkout repository
@@ -53,26 +53,15 @@ jobs:
 
       - name: Wait for LocalStack to be ready
         run: |
-          echo "Checking LocalStack health..."
-          for i in {1..20}; do
-            RESPONSE=$(curl -s http://localhost:4566/_localstack/health 2>/dev/null || echo "{}")
-            STATUS=$(echo "$RESPONSE" | python3 -c "
-          import sys, json
-          try:
-              data = json.load(sys.stdin)
-              services = data.get('services', {})
-              vals = list(services.values())
-              ready = len(vals) > 0 and all(v in ['running', 'available'] for v in vals)
-              print('ready' if ready else 'not_ready')
-          except:
-              print('not_ready')
-          ")
-            if [ "$STATUS" = "ready" ]; then
+          echo "Waiting for LocalStack..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4566/_localstack/health | grep -q "ec2"; then
               echo "LocalStack is ready!"
+              curl -s http://localhost:4566/_localstack/health
               break
             fi
-            echo "Waiting... attempt $i/20"
-            sleep 5
+            echo "Attempt $i/30 - waiting 10s..."
+            sleep 10
           done
 
       - name: Terraform format check
