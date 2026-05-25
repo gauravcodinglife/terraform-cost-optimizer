@@ -144,8 +144,7 @@ jobs:
               '## Cost Janitor Found Orphaned Resources',
               `**Orphans:** ${orphanCount}`,
               `**Est. monthly waste:** $${waste}`,
-              '---',
-              reportMd,
+              '---', reportMd,
               '_Posted by Cost Janitor workflow._',
             ].join('\n');
             await github.rest.issues.createComment({
