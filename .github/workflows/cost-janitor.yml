@@ -25,42 +25,37 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Python dependencies
-        run: pip install -r janitor/requirements.txt
+      - name: Install dependencies
+        run: |
+          pip install -r janitor/requirements.txt
+          pip install terraform-local
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.7.0"
 
-      - name: Install tflocal and awslocal
-        run: pip install terraform-local awscli-local
-
-      - name: Start LocalStack free version
+      - name: Start LocalStack 3.8.1
         run: |
           docker run -d \
             --name localstack \
             -p 4566:4566 \
             -e SERVICES=ec2,s3,sts \
             -e DEFAULT_REGION=us-east-1 \
-            -e DEBUG=0 \
             localstack/localstack:3.8.1
-
-          echo "Waiting for LocalStack to be ready..."
+          echo "Waiting for LocalStack..."
           for i in {1..40}; do
             HEALTH=$(curl -s http://localhost:4566/_localstack/health 2>/dev/null || echo "{}")
             echo "Attempt $i: $HEALTH"
-            if echo "$HEALTH" | grep -qE '"ec2".*"running"|"s3".*"running"'; then
-              echo "LocalStack is ready!"
+            if echo "$HEALTH" | grep -qE "running|available"; then
+              echo "LocalStack ready!"
               break
             fi
             sleep 5
           done
-
-          echo "Final health:"
           curl -s http://localhost:4566/_localstack/health
 
-      - name: Terraform format check
+      - name: Terraform fmt check
         working-directory: terraform
         run: terraform fmt -check -recursive
 
@@ -74,10 +69,6 @@ jobs:
 
       - name: Terraform validate
         working-directory: terraform
-        env:
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-          AWS_DEFAULT_REGION: us-east-1
         run: terraform validate
 
       - name: Terraform apply
@@ -88,7 +79,7 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
         run: tflocal apply -auto-approve -input=false
 
-      - name: Run Cost Janitor dry-run
+      - name: Run Cost Janitor
         id: janitor
         working-directory: janitor
         env:
@@ -102,9 +93,7 @@ jobs:
             --endpoint-url http://localhost:4566 \
             --output-json report.json \
             --output-md report.md || JANITOR_EXIT=$?
-
           echo "exit_code=$JANITOR_EXIT" >> $GITHUB_OUTPUT
-
           ORPHAN_COUNT=$(python3 -c "
           import json
           with open('report.json') as f:
@@ -112,7 +101,6 @@ jobs:
           print(data['summary']['total_orphans'])
           " 2>/dev/null || echo "0")
           echo "orphan_count=$ORPHAN_COUNT" >> $GITHUB_OUTPUT
-
           WASTE=$(python3 -c "
           import json
           with open('report.json') as f:
@@ -120,10 +108,7 @@ jobs:
           print(data['summary']['estimated_monthly_waste_usd'])
           " 2>/dev/null || echo "0")
           echo "monthly_waste=$WASTE" >> $GITHUB_OUTPUT
-
-          echo "-------- Janitor Report --------"
-          cat report.md || echo "No report generated"
-          echo "--------------------------------"
+          cat report.md || echo "No report"
 
       - name: Upload JSON report
         uses: actions/upload-artifact@v4
@@ -143,7 +128,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Post PR comment with findings
+      - name: Post PR comment
         if: |
           github.event_name == 'pull_request' &&
           steps.janitor.outputs.orphan_count != '0'
@@ -152,37 +137,24 @@ jobs:
           script: |
             const fs = require('fs');
             let reportMd = '';
-            try {
-              reportMd = fs.readFileSync('janitor/report.md', 'utf8');
-            } catch(e) {
-              reportMd = 'Report file not found.';
-            }
+            try { reportMd = fs.readFileSync('janitor/report.md', 'utf8'); } catch(e) {}
             const orphanCount = '${{ steps.janitor.outputs.orphan_count }}';
             const waste = '${{ steps.janitor.outputs.monthly_waste }}';
-
             const body = [
               '## Cost Janitor Found Orphaned Resources',
-              '',
-              `**Orphans detected:** ${orphanCount}`,
-              `**Estimated monthly waste:** $${waste}`,
-              '',
+              `**Orphans:** ${orphanCount}`,
+              `**Est. monthly waste:** $${waste}`,
               '---',
-              '',
               reportMd,
-              '',
-              '---',
-              '_Posted automatically by Cost Janitor workflow._',
+              '_Posted by Cost Janitor workflow._',
             ].join('\n');
-
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: body,
+              body,
             });
 
       - name: Fail if orphans found
         if: steps.janitor.outputs.exit_code != '0'
-        run: |
-          echo "Cost Janitor found orphaned resources."
-          exit 1
+        run: exit 1
