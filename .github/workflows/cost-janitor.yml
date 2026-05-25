@@ -37,12 +37,16 @@ jobs:
 
       - name: Start LocalStack 3.8.1
         run: |
+          # Remove any existing localstack container
+          docker rm -f localstack 2>/dev/null || true
+
           docker run -d \
             --name localstack \
             -p 4566:4566 \
             -e SERVICES=ec2,s3,sts \
             -e DEFAULT_REGION=us-east-1 \
             localstack/localstack:3.8.1
+
           echo "Waiting for LocalStack..."
           for i in {1..40}; do
             HEALTH=$(curl -s http://localhost:4566/_localstack/health 2>/dev/null || echo "{}")
