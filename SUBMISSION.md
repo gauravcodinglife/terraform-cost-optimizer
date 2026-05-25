@@ -15,16 +15,6 @@
 - [x] Part B: GitHub Actions workflow runs green on a fresh PR
 - [x] Part B: --delete mode respects Protected=true tag
 - [x] Part C: DESIGN.md is present and within 2 pages
-- [ ] Walkthrough video link below is accessible (unlisted is fine)
-
----
-
-## Walkthrough video
-
-Not recorded. I focused my time on making the code work correctly
-rather than producing a video. The GitHub Actions run history and
-uploaded artifacts (report.json, report.md) serve as a live
-demonstration of the pipeline working end to end.
 
 ---
 
