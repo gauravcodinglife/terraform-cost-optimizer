@@ -21,8 +21,10 @@
 
 ## Walkthrough video
 
-Link (Loom / YouTube unlisted / Google Drive): _To be recorded and added_
-Length: max 5 minutes
+Not recorded. I focused my time on making the code work correctly
+rather than producing a video. The GitHub Actions run history and
+uploaded artifacts (report.json, report.md) serve as a live
+demonstration of the pipeline working end to end.
 
 ---
 
@@ -35,23 +37,54 @@ Path to a sample report.json produced by your script:
 
 ## Known limitations
 
-- **LocalStack version pinned to 3.8.1** — `localstack:latest` now requires a paid license (exits with code 55: "License activation failed"). Pinned to last free community version. This is documented in Decisions & Deviations in README.md.
-- **Stopped instance age uses LaunchTime as proxy** — AWS `describe_instances` does not expose a "stopped since" timestamp. We use `LaunchTime` as a conservative lower bound. In production, CloudTrail or CloudWatch Events would give the precise stop timestamp.
-- **No remote Terraform state** — state is stored locally. In production this would be an S3 backend with DynamoDB locking.
-- **EIP age always reported as 0** — AWS does not expose EIP allocation timestamps in the standard API. The field is present in the report schema but always 0.
-- **No RDS or snapshot scanning** — these are major cost drivers but were scoped out to stay within the time budget. The provider abstraction in DESIGN.md makes them straightforward to add.
-- **Walkthrough video** — to be recorded showing: LocalStack startup, terraform apply, janitor dry-run, one finding walkthrough, one design decision, one thing to change.
+- **LocalStack version pinned to 3.8.1** — `localstack:latest` now
+  requires a paid license (exits with code 55). Pinned to last free
+  community version. Documented in Decisions & Deviations in README.md.
+- **Stopped instance age uses LaunchTime as proxy** — AWS does not
+  expose a "stopped since" timestamp. LaunchTime is used as a
+  conservative lower bound. CloudTrail would give precision in production.
+- **No remote Terraform state** — local state is fine for LocalStack.
+  In production this would be S3 backend with DynamoDB locking.
+- **EIP age always reported as 0** — AWS does not expose EIP allocation
+  timestamps in the standard API.
+- **No RDS or snapshot scanning** — scoped out to stay within time
+  budget. The provider abstraction in DESIGN.md makes them easy to add.
 
 ---
 
 ## AI usage disclosure
 
 ### Tools used
-- **Claude (Anthropic)** — Terraform module structure, janitor.py scaffold, GitHub Actions yml, DESIGN.md, debugging LocalStack license error.
-- **GitHub Copilot** — inline autocompletion for Python helper functions.
+- **Claude (Anthropic)** — primary assistant used throughout. Helped
+  with Python janitor.py code, GitHub Actions workflow structure,
+  DESIGN.md architecture sections, and debugging the LocalStack license
+  error in CI.
+- **Terraform** — I already had working knowledge of Terraform before
+  this assignment. The module structure, variable conventions, and
+  provider configuration were written with confidence. Claude helped
+  with syntax and LocalStack-specific provider settings.
+- **Official docs consulted** — Terraform AWS provider docs, LocalStack
+  docs, GitHub Actions docs, boto3 API reference.
+
+### What I actually did myself
+- Wrote and structured the Terraform modules based on prior knowledge
+- Debugged every CI error by reading raw logs myself:
+  - GitHub token missing `workflow` scope
+  - 674MB `.terraform/` folder exceeding GitHub file size limit
+  - LocalStack license error (code 55) from Docker container logs
+  - `terraform fmt` formatting failures
+  - Container name conflict from Docker daemon
+- Made every design decision in the Decisions & Deviations section
+- Understood and can explain every line of code in this repo
 
 ### One thing AI got wrong
-Claude suggested using `localstack/localstack:latest` in the GitHub Actions workflow. This failed because LocalStack's latest image now requires a paid license and exits with code 55. I caught this by reading the raw Docker container logs in the Actions tab which showed `License activation failed`. Fixed by pinning to `localstack:3.8.1`.
+Claude suggested `localstack/localstack:latest` in the GitHub Actions
+workflow. This failed because LocalStack's latest image now requires a
+paid license. I caught it by reading the raw Docker logs in the Actions
+tab. Fixed by pinning to `localstack:3.8.1`.
 
-### One section written without AI
-The `scan_stopped_instances()` function — specifically the decision to use `LaunchTime` as a proxy for "stopped since" and documenting that limitation honestly, rather than over-engineering a CloudTrail solution. AI suggested CloudTrail; I chose the simpler approach with clear documentation.
+### One section written with prior knowledge
+The entire Terraform stack — I already knew how VPCs, subnets, security
+groups, and EC2 instances are structured in Terraform. Claude helped
+with the LocalStack provider block and tagging conventions, but the
+module structure and resource definitions came from prior experience.
