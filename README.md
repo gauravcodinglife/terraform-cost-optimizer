@@ -285,5 +285,3 @@ Open an issue or reach out:
 - LinkedIn: [https://www.linkedin.com/in/gaurav-chavan-codinglife/]
 
 ---
-
-**Built as part of #90DaysOfCloudDevOps challenge**
