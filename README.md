@@ -1,48 +1,56 @@
----
+cat > ~/nimbus-kart-devops/README.md << 'EOF'
+# Cloud Cost Hygiene Platform — Infrastructure Automation Project
 
-## 🤖 AI Usage & Learning
-
-### What Claude Helped With
-- Terraform module structure
-- Python script scaffold
-- GitHub Actions workflow setup
-- DESIGN.md architecture thinking
-
-### What I Did Myself
-- Debugged every error by reading logs
-- Made architectural decisions (security, safety)
-- Wrote error-prone functions (scan_stopped_instances)
-- Fixed the LocalStack license issue
-
-### Key Lesson
-**AI is a tool for velocity, not correctness.** Reading error messages and understanding failures is still 100% human work.
+A complete DevOps project that automatically detects and prevents cloud waste before it reaches production.
 
 ---
 
-## 🔗 Links
+## 🎯 Project Overview
 
-- **GitHub:** https://github.com/gauravcodinglife/terraform-cost-optimizer
-- **LinkedIn:** https://linkedin.com/in/gaurav-chavan-codinglife
-- **Blog:** https://medium.com/@codinggaurav85
+Built as a practical DevOps engineering assignment, this project demonstrates:
+- **Infrastructure as Code** with Terraform on AWS (via LocalStack)
+- **Cost optimization automation** using Python + boto3
+- **CI/CD pipeline integration** with GitHub Actions
+- **Real-world problem solving** — detecting orphaned resources that cost money
 
----
-
-## 📝 License
-
-MIT — use this for learning/inspiration!
+**Real-world context:** NimbusKart (e-commerce startup) saw their AWS bill jump from $400/month to $2,100/month due to forgotten resources. This project automates detection and prevention.
 
 ---
 
-## 🙋 Questions?
+## 🏗️ What's Built
 
-Email: codinggaurav85@gmail.com  
-Phone: +91-8530254513
+### Part 1 — Infrastructure as Code (Terraform)
+Modular Terraform stack provisioning:
+- VPC with 2 public subnets across 2 AZs
+- Security groups (hardened SSH access)
+- 2 EC2 instances (web tier)
+- S3 bucket with versioning + lifecycle rules
+- 1 intentional orphan EBS volume (for testing)
+
+**Key decision:** Uses LocalStack (free AWS emulator) — zero real AWS costs.
+
+### Part 2 — Cost Janitor (Python Automation)
+Python script detecting 4 types of waste:
+1. Unattached EBS volumes
+2. Stopped EC2 instances (> 14 days)
+3. Idle Elastic IPs
+4. Untagged resources
+
+**Outputs:**
+- `report.json` — machine-readable findings
+- `report.md` — human-readable cost summary
+
+### Part 3 — CI/CD Enforcement (GitHub Actions)
+Automated workflow that:
+- Spins up LocalStack
+- Applies Terraform infrastructure
+- Runs cost scanner
+- **Blocks PR merge** if orphans found
+- Posts cost report as PR comment
 
 ---
 
-**Built during #90DaysOfCloudDevOps challenge** 🚀
-EOF
+## 🚀 How to Run
 
-git add README.md
-git commit -m "docs: convert to portfolio project README"
-git push origin main
+### Prerequisites
+```bash
