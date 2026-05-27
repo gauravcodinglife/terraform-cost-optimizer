@@ -1,4 +1,3 @@
-cat > ~/nimbus-kart-devops/README.md << 'EOF'
 # Cloud Cost Hygiene Platform — Infrastructure Automation Project
 
 A complete DevOps project that automatically detects and prevents cloud waste before it reaches production.
